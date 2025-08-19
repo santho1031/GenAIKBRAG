@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Knowledge Base & RAG – Training Hub</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- MermaidJS for diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <style>
+    /* ====== AI Summit Dark Theme ====== */
+    :root {
+      --theme-bg: #0D0B1A;
+      --theme-surface: #16142A;
+      --theme-primary: #8A3FFC;
+      --theme-secondary: #3D1D99;
+      --theme-text-primary: #F0F2F5;
+      --theme-text-secondary: #A0AEC0;
+      --theme-border: rgba(255, 255, 255, 0.1);
+      --theme-glow: rgba(138, 63, 252, 0.5);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; 
+      color: var(--theme-text-primary);
+      background-color: var(--theme-bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      -webkit-font-smoothing:antialiased; 
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* ---- Page container for single-page app behavior ---- */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ---- Nav ---- */
+    .nav{
+      position:sticky; top:0; z-index:50; 
+      backdrop-filter:saturate(1.2) blur(8px);
+      background-color: rgba(13, 11, 26, 0.7);
+      border-bottom: 1px solid var(--theme-border);
+    }
+    .nav a{ color: var(--theme-text-secondary); font-weight:600; }
+    .nav a.active{ color: var(--theme-primary); }
+
+    /* ---- Hero Section ---- */
+    .hero-omh{
+      position:relative; overflow:hidden; display:grid; place-items:center;
+      padding:4.5rem 1.25rem 6.25rem; 
+      color: var(--theme-text-primary);
+      background: var(--theme-bg);
+    }
+    .hero-omh h1{
+      margin:0 0 .4rem; font-weight:800; font-size:clamp(2.2rem,6vw,3.6rem);
+      line-height:1.05; letter-spacing:-0.02em; 
+      text-shadow: 0 0 24px var(--theme-glow);
+    }
+
+    /* ---- Cards & Buttons ---- */
+    .card-glass{
+      background-color: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      border-radius: 20px; 
+      padding: 1.5rem;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      transition:transform .25s ease, box-shadow .25s ease;
+    }
+    .card-glass:hover{ 
+      transform:translateY(-6px); 
+      box-shadow:0 0 25px rgba(138, 63, 252, 0.2); 
+      border-color: rgba(138, 63, 252, 0.3);
+    }
+
+    .btn-ice{
+      color: #fff; 
+      background-color: var(--theme-primary);
+      border: 1px solid var(--theme-primary); 
+      border-radius: 14px; 
+      padding: 12px 18px;
+      font-weight: 700; 
+      display: inline-block;
+      transition: all .2s ease;
+      text-decoration: none;
+    }
+    .btn-ice:hover{ 
+      transform: translateY(-2px); 
+      box-shadow: 0 0 15px var(--theme-glow);
+    }
+
+    .btn-ghost{
+      color: var(--theme-text-primary); 
+      background: transparent; 
+      border: 1px solid var(--theme-border);
+      border-radius: 14px; 
+      padding: 12px 18px; 
+      font-weight: 700; 
+      display: inline-block;
+      transition: all .2s ease;
+      text-decoration: none;
+    }
+    .btn-ghost:hover{ 
+      background-color: var(--theme-surface);
+      border-color: var(--theme-primary);
+      color: var(--theme-primary);
+    }
+
+    /* ---- Code blocks ---- */
+    pre{
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--theme-border);
+      color: var(--theme-text-secondary); 
+      border-radius: 16px; 
+      padding: 1rem; 
+      overflow: auto;
+    }
+    code{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace }
+
+    /* ---- Scroll reveal ---- */
+    .scroll-reveal{ opacity:0; transform:translateY(22px); transition:opacity .6s ease, transform .6s ease; }
+    .scroll-reveal.visible{ opacity:1; transform:translateY(0); }
+
+    /* ---- Mermaid theming ---- */
+    .mermaid { 
+      background-color: rgba(0,0,0,0.2); 
+      border-radius: 16px; 
+      padding: 12px; 
+    }
+    .mermaid svg .edgePaths path { stroke: var(--theme-primary) !important; }
+    .mermaid svg .flowchart-label, .mermaid svg .nodeLabel { fill: var(--theme-text-primary) !important; }
+    .mermaid svg .node rect, .mermaid svg .node polygon {
+      fill: var(--theme-secondary) !important; 
+      stroke: var(--theme-primary) !important;
+    }
+    .text-slate-700 {
+        color: rgba(240, 242, 245, 0.85); /* Brighter secondary text */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="nav">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a data-nav href="#home" class="text-lg font-extrabold">KarmicVerse • Labs</a>
+      <div class="flex items-center gap-4 text-sm">
+        <a data-nav href="#knowledge">Knowledge Base</a>
+        <a data-nav href="#rag">RAG</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content Area -->
+  <div id="page-container">
+
+    <!-- Home Page -->
+    <div id="home" class="page">
+      <header class="hero-omh">
+        <div class="text-center max-w-3xl mx-auto">
+          <div class="uppercase tracking-widest text-sm opacity-90">Training Hub</div>
+          <h1>From Scattered PDFs to Grounded Answers</h1>
+          <p class="opacity-95 mt-2 mb-4">Two tracks: <strong>Knowledge Base Creation</strong> and <strong>Retrieval-Augmented Generation</strong>. Learn the why, build the how, then ship.</p>
+          <div class="flex gap-3 justify-center">
+            <a class="btn-ice" href="#knowledge">Start: Knowledge Base</a>
+            <a class="btn-ghost" href="#rag">Jump to RAG</a>
+          </div>
+        </div>
+      </header>
+      <main class="max-w-6xl mx-auto px-4 py-12 md:py-16 space-y-12">
+        <section class="card-glass scroll-reveal">
+            <h2 class="text-2xl font-extrabold mb-2">End-to-End Pipeline</h2>
+            <div class="mermaid">
+            flowchart LR
+              A["Docs & Data"] --> B["Parse / Extract"]
+              B --> C["Chunk"]
+              C --> D["Embed"]
+              D --> E["Store & Index"]
+              E --> F{"Retrieve"}
+              F --> G["Re-rank"]
+              G --> H["Compose Prompt"]
+              H --> I["Generate + Cite"]
+
+              classDef kv fill:#3D1D99,stroke:#8A3FFC,color:#F0F2F5;
+              class B,C,D,E,F,G,H kv;
+            </div>
+            <p class="text-[0.95rem] mt-2 text-slate-700">Everything you build fits somewhere along this chain. We’ll master each block.</p>
+        </section>
+        
+        <section class="grid md:grid-cols-2 gap-6 items-start">
+          <div class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-1">What You will ship</h3>
+            <ul class="list-disc pl-5 text-slate-700 space-y-1">
+              <li>PGVector DB with documents + embeddings</li>
+              <li>Retriever that returns top-k with scores & sources</li>
+              <li>RAG answerer with citations and guardrails</li>
+              <li>Mini eval set + accuracy/faithfulness checks</li>
+            </ul>
+          </div>
+          <div class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-1">Time-boxed modules</h3>
+            <ol class="list-decimal pl-5 text-slate-700 space-y-1">
+              <li>Ingest + Chunking</li>
+              <li>Embeddings + Indexing</li>
+              <li>Retrieval + Rerank</li>
+              <li>RAG Compose + Eval</li>
+            </ol>
+          </div>
+        </section>
+
+        <section id="assignments" class="scroll-reveal">
+          <h2 class="text-2xl font-extrabold mb-3">Assignments</h2>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="card-glass">
+              <h4 class="font-bold mb-1">A1 • Build KB</h4>
+              <p class="text-slate-700 mb-2">Load 5 PDFs → chunk (300/60 overlap) → embed (MiniLM) → store in PGVector. Add HNSW & GIN indexes.</p>
+              <a href="#knowledge" class="btn-ice">Do it</a>
+            </div>
+            <div class="card-glass">
+              <h4 class="font-bold mb-1">A2 • Retriever</h4>
+              <p class="text-slate-700 mb-2">Implement cosine search + optional BM25 hybrid; return sources + preview.</p>
+              <a href="#rag" class="btn-ice">Start</a>
+            </div>
+            <div class="card-glass">
+              <h4 class="font-bold mb-1">A3 • RAG & Eval</h4>
+              <p class="text-slate-700 mb-2">Compose prompt with citations; run small faithfulness check (answer quotes must appear in sources).</p>
+              <a href="#rag" class="btn-ice">Evaluate</a>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Knowledge Base Page -->
+    <div id="knowledge" class="page">
+      <header class="hero-omh">
+        <div class="text-center max-w-3xl mx-auto">
+          <div class="uppercase tracking-widest text-sm opacity-90">Track 1</div>
+          <h1>Create a High-Quality Knowledge Base</h1>
+          <p class="opacity-95 mt-2">Parsing → Chunking → Embedding → Indexing → Verification</p>
+        </div>
+      </header>
+      <main class="max-w-6xl mx-auto px-4 py-12 md:py-16 space-y-12">
+        <section class="card-glass scroll-reveal">
+          <h2 class="text-2xl font-extrabold mb-2">KB Pipeline</h2>
+          <div class="mermaid">
+          flowchart TD
+            A["Collect Docs"] --> B["Parse (PDF / HTML / CSV)"]
+            B --> C["Normalize (clean · dedupe · metadata)"]
+            C --> D["Chunk (300 tokens · 60 overlap)"]
+            D --> E["Embed (MiniLM or text-embedding-3-small)"]
+            E --> F["Store in PGVector"]
+            F --> G["Index (HNSW + GIN)"]
+            G --> H["QA Sample (spot-check chunks)"]
+            H --> I["Schedule Refresh"]
+
+            classDef kv fill:#3D1D99,stroke:#8A3FFC,color:#F0F2F5;
+            class B,C,D,E,F,G,H kv;
+          </div>
+        </section>
+        <section class="grid md:grid-cols-2 gap-6">
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">1) Install & Enable PGVector</h3>
+            <pre><code># macOS (Homebrew)
+brew install postgresql@16 pgvector
+brew services start postgresql
+
+# psql
+CREATE DATABASE kb;
+\c kb
+CREATE EXTENSION IF NOT EXISTS vector;</code></pre>
+          </article>
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">2) Schema (Docs + Chunks)</h3>
+            <pre><code>CREATE TABLE IF NOT EXISTS documents(
+  id BIGSERIAL PRIMARY KEY,
+  uri TEXT UNIQUE, title TEXT, meta JSONB, checksum TEXT
+);
+
+CREATE TABLE IF NOT EXISTS chunks(
+  id BIGSERIAL PRIMARY KEY,
+  doc_id BIGINT REFERENCES documents(id) ON DELETE CASCADE,
+  idx INT, content TEXT,
+  embedding vector(384)
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(doc_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_hnsw ON chunks
+USING hnsw (embedding vector_cosine_ops)
+WITH (m=16, ef_construction=200);
+CREATE INDEX IF NOT EXISTS idx_docs_gin ON documents USING gin (meta);</code></pre>
+          </article>
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">3) Chunking Rules</h3>
+            <ul class="list-disc pl-5 text-slate-700">
+              <li>Target <strong>300 tokens</strong>, <strong>60</strong> overlap</li>
+              <li>Respect headings & tables (keep semantics)</li>
+              <li>Inject metadata: <code>{section, page, uri}</code></li>
+            </ul>
+            <pre><code># Python pseudo
+for page in pdf_pages:
+  text = clean(page)
+  for i in range(0, len(text), window - overlap):
+    chunk = text[i:i+window]
+    save(doc_id, idx, chunk, meta)</code></pre>
+          </article>
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">4) Embeddings + Insert</h3>
+            <pre><code># Python (sentence-transformers)
+from sentence_transformers import SentenceTransformer
+import psycopg2, numpy as np
+
+m = SentenceTransformer("all-MiniLM-L6-v2")
+emb = m.encode([content]).astype(np.float32)[0]
+
+cur.execute("INSERT INTO chunks(doc_id, idx, content, embedding) VALUES (%s,%s,%s,%s)",
+            (doc_id, idx, content, emb.tolist()))</code></pre>
+          </article>
+        </section>
+        <section class="card-glass scroll-reveal">
+          <h3 class="font-bold text-xl mb-2">5) Quality Gate (Intern checklist)</h3>
+          <ul class="list-disc pl-5 text-slate-700 space-y-1">
+            <li>No duplicate docs; checksums stored</li>
+            <li>Chunks have balanced length; no broken tables</li>
+            <li>Random 10 chunk spot-reads with source context</li>
+            <li>Simple eval: 10 questions → must retrieve the right chunk ≥80% of time</li>
+          </ul>
+        </section>
+        <div class="flex gap-3 justify-end">
+          <a class="btn-ice" href="#home">Back</a>
+          <a class="btn-ghost" href="#rag">Next: RAG →</a>
+        </div>
+      </main>
+    </div>
+
+    <!-- RAG Page -->
+    <div id="rag" class="page">
+      <header class="hero-omh">
+        <div class="text-center max-w-3xl mx-auto">
+          <div class="uppercase tracking-widest text-sm opacity-90">Track 2</div>
+          <h1>Retrieval-Augmented Generation (RAG)</h1>
+          <p class="opacity-95 mt-2">Ground answers in your KB. Show sources. Reduce hallucinations.</p>
+        </div>
+      </header>
+      <main class="max-w-6xl mx-auto px-4 py-12 md:py-16 space-y-12">
+        
+        <section class="scroll-reveal">
+          <h2 class="text-2xl font-extrabold mb-3">Agent Orchestration and RAG (Context)</h2>
+          <p class="text-slate-700 mb-4">The agent’s end-to-end control loop calls the retrieval track for grounded answers.</p>
+          <div class="card-glass mt-6">
+              <h3 class="font-bold text-xl mb-2">Agent Orchestration Pipeline</h3>
+              <div class="mermaid">
+              flowchart LR
+                subgraph SGA[Agent Orchestration]
+                direction LR
+                  A0[User query]
+                  A1[Gateway auth and rate limit]
+                  A2[Safety checks]
+                  A3[Intent router]
+                  A4[Load memory and context]
+                  A5[Planner]
+                  A6{Need tools or data}
+                  A7[Execute tools]
+                  A8[Observe results]
+                  A9[Refine plan]
+                  A10[Compose answer]
+                  A11[Critic faithfulness and policy]
+                  A12{Pass}
+                  A13[Redraft with feedback]
+                  A14[Answer with citations]
+                  A15[Log metrics]
+                  A0 --> A1 --> A2 --> A3 --> A4 --> A5 --> A6
+                  A6 --> A7 --> A8 --> A9 --> A10
+                  A6 --> A10
+                  A10 --> A11 --> A12
+                  A12 --> A13 --> A10
+                  A12 --> A14 --> A15
+                end
+
+                subgraph SGR[RAG Retrieval]
+                direction LR
+                  R0[Encode query]
+                  R1[Search vector database]
+                  R2[Hybrid BM25 optional]
+                  R3[Re-ranker cross encoder]
+                  R4[Build context window]
+                  R5[Create citation map]
+                  R0 --> R1 --> R2 --> R3 --> R4 --> R5
+                end
+
+                A5 --- R0
+                R4 --- A10
+                R5 --- A14
+
+                classDef kv fill:#3D1D99,stroke:#8A3FFC,color:#F0F2F5;
+                class A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 kv
+                class R0,R1,R2,R3,R4,R5 kv
+              </div>
+            </div>
+        </section>
+
+        <section class="grid md:grid-cols-2 gap-6 scroll-reveal">
+            <div class="card-glass">
+              <h3 class="font-bold text-xl mb-2">RAG Retrieval Flow</h3>
+              <div class="mermaid">
+              flowchart TD
+                Q[User query] --> E[Encode to vector]
+                E --> V[Vector search top-k]
+                V --> H[Hybrid BM25 optional]
+                H --> RR[Re-rank optional]
+                RR --> CW[Build context window]
+                CW --> CM[Citation map]
+                classDef kv fill:#3D1D99,stroke:#8A3FFC,color:#F0F2F5;
+                class E,V,H,RR,CW,CM kv
+              </div>
+            </div>
+            <div class="card-glass">
+              <h2 class="font-bold text-xl mb-2">RAG Flow</h2>
+              <div class="mermaid">
+              flowchart TD
+                Q["User Query"] --> R["Retriever (PGVector cosine)"]
+                R --> RR["Re-ranker (cross encoder)"]
+                RR --> C["Compose Prompt (system + citations)"]
+                C --> G["LLM Generate"]
+                G --> O["Answer + Source List"]
+
+                classDef kv fill:#3D1D99,stroke:#8A3FFC,color:#F0F2F5;
+                class R,RR,C kv
+              </div>
+            </div>
+        </section>
+        
+        <section id="retrieval" class="grid md:grid-cols-2 gap-6">
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">Retriever (SQL)</h3>
+            <pre><code>-- top-k cosine
+WITH q AS (
+  SELECT CAST($1 AS vector(384)) AS v
+)
+SELECT d.title, d.uri, c.content,
+       1 - (c.embedding <=> (SELECT v FROM q)) AS score
+FROM chunks c
+JOIN documents d ON d.id = c.doc_id
+ORDER BY c.embedding <=> (SELECT v FROM q)
+LIMIT 5;</code></pre>
+            <p class="text-slate-700 mt-2">Return score, title, uri, and a short preview for UI.</p>
+          </article>
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">Prompt Compose</h3>
+            <pre><code>System:
+"You are a precise assistant. Use ONLY the provided sources.
+Cite as [source N]. If unsure, say 'Not in the knowledge base.'"
+
+User:
+Question: {question}
+
+Context:
+{{
+  for i, doc in enumerate(sources):
+    print(f"[source {i+1}] {doc.uri}\n{doc.snippet}\n")
+}}</code></pre>
+          </article>
+        </section>
+        <section class="card-glass scroll-reveal">
+          <h3 class="font-bold text-xl mb-2">LangGraph Skeleton (Agent as a Tool)</h3>
+          <pre><code># python-esque sketch
+from langgraph.graph import StateGraph, START, END
+
+def retrieve(state):
+  q = state["question"]
+  state["sources"] = pgvector_search(q)
+  return state
+
+def compose(state):
+  state["prompt"] = build_prompt(state["question"], state["sources"])
+  return state
+
+def generate(state):
+  state["answer"] = llm(state["prompt"])
+  return state
+
+g = StateGraph(dict)
+g.add_node("retrieve", retrieve)
+g.add_node("compose", compose)
+g.add_node("generate", generate)
+g.add_edge(START, "retrieve")
+g.add_edge("retrieve", "compose")
+g.add_edge("compose", "generate")
+g.add_edge("generate", END)
+app = g.compile()</code></pre>
+        </section>
+        <section id="eval" class="grid md:grid-cols-2 gap-6">
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">Mini Eval (Faithfulness)</h3>
+            <pre><code># for each Q/A, assert every quoted span appears in a source
+def quoted_spans(answer): ...
+def appears_in_sources(span, sources): ...
+hits = sum(appears_in_sources(s, sources) for s in quoted_spans(answer))
+score = hits / max(1, len(quoted_spans(answer)))</code></pre>
+            <p class="text-slate-700 mt-2">Track <em>groundedness</em> per answer. Target ≥ 0.9.</p>
+          </article>
+          <article class="card-glass scroll-reveal">
+            <h3 class="font-bold text-xl mb-2">UX Tips</h3>
+            <ul class="list-disc pl-5 text-slate-700 space-y-1">
+              <li>Show source chips with titles + confidence</li>
+              <li>Toggle “Only from source N” filter</li>
+              <li>Let users open the exact chunk location</li>
+            </ul>
+          </article>
+        </section>
+        <div class="flex gap-3 justify-end">
+          <a class="btn-ice" href="#knowledge">← Back</a>
+          <a class="btn-ghost" href="#home">Home</a>
+        </div>
+      </main>
+    </div>
+
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // --- Keep a copy of the raw diagram text so we can re-render cleanly ---
+    document.querySelectorAll('.mermaid').forEach(el => {
+      el.dataset.msrc = (el.textContent || '').trim();
+    });
+
+    // --- Mermaid init: do NOT render on load ---
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: false,      // critical for SPA
+        theme: 'base',
+        securityLevel: 'strict',   // keep strict; we’re not using HTML in labels
+        flowchart: { htmlLabels: false, useMaxWidth: true, wrap: true },
+        themeVariables: {
+          primaryColor: '#3D1D99',
+          primaryBorderColor: '#8A3FFC',
+          primaryTextColor: '#F0F2F5',
+          lineColor: '#8A3FFC',
+          secondaryColor: '#3D1D99',
+          tertiaryColor: '#16142A'
+        }
+      });
+    }
+
+    // --- SPA routing ---
+    const pages    = document.querySelectorAll('.page');
+    const navLinks = document.querySelectorAll('[data-nav]');
+
+    function renderMermaidFor(pageEl) {
+      if (!window.mermaid || !pageEl) return;
+
+      // reset any previously "half rendered" blocks, then render only in this page
+      const blocks = pageEl.querySelectorAll('.mermaid');
+      blocks.forEach(b => {
+        // If already processed while hidden (or width was 0), reset to source
+        const needsReset =
+          b.getAttribute('data-processed') === 'true' &&
+          (!b.querySelector('svg') || b.clientWidth === 0 || b.clientHeight === 0);
+
+        if (needsReset) {
+          b.removeAttribute('data-processed');
+          if (b.dataset.msrc) b.textContent = b.dataset.msrc;
+        }
+      });
+
+      // Defer to next paint so display:block has taken effect
+      requestAnimationFrame(() => {
+        // Limit rendering to the now-visible page for speed/stability
+        const selector = `#${pageEl.id} .mermaid`;
+        mermaid.run({ querySelector: selector });
+      });
+    }
+
+    function handleNavigation() {
+      const hash = window.location.hash || '#home';
+      const id   = hash.slice(1);
+
+      pages.forEach(p => p.classList.remove('active'));
+      const current = document.getElementById(id) || document.getElementById('home');
+      current.classList.add('active');
+      window.scrollTo(0, 0);
+
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === hash));
+
+      renderMermaidFor(current);
+    }
+
+    window.addEventListener('hashchange', handleNavigation);
+    handleNavigation(); // initial route
+
+    // --- Scroll reveal (unchanged) ---
+    const reveal = document.querySelectorAll('.scroll-reveal');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    reveal.forEach(el => io.observe(el));
+  });
+  </script>
+</body>
+</html>
